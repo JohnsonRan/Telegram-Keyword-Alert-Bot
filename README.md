@@ -6,5 +6,5 @@ poetry install
 ```
 ## run
 ```bash
-poetry run python main.py
+poetry run python3 main.py
 ```

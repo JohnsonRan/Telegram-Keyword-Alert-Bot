@@ -1,6 +1,10 @@
 import asyncio
 from telethon import TelegramClient, events
 import telebot
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 
 # Configuration
 config = {
@@ -19,22 +23,22 @@ bot = telebot.TeleBot(config['bot_token'])
 async def my_event_handler(event):
     for keyword in config['keywords']:
         if keyword in event.raw_text:
-            print("Keyword found in message. Sending message...")
+            logging.info("Keyword found in message. Sending message...")
             message_link = f"https://t.me/c/{config['channel_link']}/{event.id}"
             bot.send_message(config['user_id'], f"关键词: {keyword}\n链接: {message_link}")
 
 async def main():
     try:
-        print("Starting client...")
+        logging.info("Starting client...")
         await client.start()
-        print("Client started. Running until disconnected...")
+        logging.info("Client started. Running until disconnected...")
         await client.run_until_disconnected()
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logging.error(f"An error occurred: {e}")
     finally:
-        print("Logging out...")
+        logging.info("Logging out...")
         await client.log_out()
-        print("Logged out.")
+        logging.info("Logged out.")
 
 # Run the main function
 asyncio.run(main())
