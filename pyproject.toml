@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "telegram-keyword-push"
+version = "0.0.1"
+description = "A script to monitor message keywords in a specific channel then push the message link to you."
+authors = ["JohnsonRan"]
+license = "GPL-3.0"
+readme = "README.md"
+repository = "https://github.com/JohnsonRan/Telegram-Keyword-Alert-Bot"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+Telethon = "^1.32.0"
+telebot = "^0.0.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
