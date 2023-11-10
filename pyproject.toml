@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "telegram-keyword-push"
+name = "Telegram-Keyword-Alert-Bot"
 version = "0.0.1"
 description = "A script to monitor message keywords in a specific channel then push the message link to you."
 authors = ["JohnsonRan"]
