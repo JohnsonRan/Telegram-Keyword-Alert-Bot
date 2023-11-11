@@ -11,6 +11,8 @@ repository = "https://github.com/JohnsonRan/Telegram-Keyword-Alert-Bot"
 python = "^3.11"
 Telethon = "^1.32.0"
 telebot = "^0.0.5"
+psutil = "^5.9.6"
+pyyaml = "^6.0.1"
 
 
 [build-system]
