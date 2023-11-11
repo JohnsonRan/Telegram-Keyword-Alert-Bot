@@ -20,8 +20,13 @@ with open('config.yml', 'r') as f:
 client = TelegramClient('anon', config['api_id'], config['api_hash'])
 bot = telebot.TeleBot(config['bot_token'])
 
+# Initialize the counter
+message_counter = 0
+
 @client.on(events.NewMessage(chats=config['channel_link']))
 async def my_event_handler(event):
+    global message_counter
+    message_counter += 1  # Increment the counter for each new message
     for keyword in config['keywords']:
         if keyword in event.raw_text:
             logging.info("Keyword found in message. Sending message...")
@@ -30,6 +35,7 @@ async def my_event_handler(event):
 
 @bot.message_handler(commands=['check'])
 def send_system_info(message):
+    global message_counter
     logging.info("Received /check command")  # Log a message when the /check command is received
 
     # 获取系统运行时间
@@ -46,7 +52,7 @@ def send_system_info(message):
     server_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # 构建消息
-    msg = f"服务器运行时间: {uptime}\nCPU使用率: {cpu_usage}%\n内存使用率: {memory_usage}%\n服务器时间: {server_time}"
+    msg = f"服务器运行时间: {uptime}\nCPU使用率: {cpu_usage}%\n内存使用率: {memory_usage}%\n服务器时间: {server_time}\n已检查消息数: {message_counter}"
 
     # 发送消息
     bot.reply_to(message, msg)
