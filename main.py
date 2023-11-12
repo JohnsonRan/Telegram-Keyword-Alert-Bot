@@ -68,13 +68,25 @@ def send_system_info(message):
 
     # 获取内存使用情况
     memory_info = psutil.virtual_memory()
-    memory_usage = memory_info.percent
+    total_memory_gb = memory_info.total / (1024.0 ** 3)  # Convert bytes to GB
+    used_memory_gb = (memory_info.total - memory_info.available) / (1024.0 ** 3)  # Convert bytes to GB
+
+    # 如果内存小于1GB，则以MB的形式显示
+    if used_memory_gb < 1:
+        used_memory = f"{used_memory_gb * 1024:.2f}MB"
+    else:
+        used_memory = f"{used_memory_gb:.2f}GB"
+
+    if total_memory_gb < 1:
+        total_memory = f"{total_memory_gb * 1024:.2f}MB"
+    else:
+        total_memory = f"{total_memory_gb:.2f}GB"
 
     # 获取服务器时间
     server_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # 构建消息
-    msg = f"运行时间: {uptime}\nCPU使用率: {cpu_usage}%\n内存使用率: {memory_usage}%\n服务器时间: {server_time}"
+    msg = f"运行时间: {uptime}\nCPU使用率: {cpu_usage}%\n内存: {used_memory} / {total_memory}\n服务器时间: {server_time}"
 
     # 发送消息
     bot.reply_to(message, msg)
