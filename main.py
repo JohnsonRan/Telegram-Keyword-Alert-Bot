@@ -56,9 +56,9 @@ for channel_link in config['channel_links']:
                 message_link = f"{TELEGRAM_LINK_PREFIX}{channel_link}/{event.id}"
                 bot.send_message(config['user_id'], f"关键词: {keyword}\n链接: {message_link}")
 
-@bot.message_handler(commands=['check'])
+@bot.message_handler(commands=['status'])
 def send_system_info(message):
-    logging.info("Received /check command")  # Log a message when the /check command is received
+    logging.info("Received /status command")  # Log a message when the /check command is received
 
     # 计算脚本运行时间
     uptime = message_counter.get_uptime()
@@ -79,9 +79,9 @@ def send_system_info(message):
     # 发送消息
     bot.reply_to(message, msg)
 
-@bot.message_handler(commands=['count'])
+@bot.message_handler(commands=['counts'])
 def send_message_counts(message):
-    logging.info("Received /count command")  # Log a message when the /count command is received
+    logging.info("Received /counts command")  # Log a message when the /count command is received
 
     # Build the message
     counts = message_counter.get_counts()
