@@ -49,16 +49,9 @@ class MessageCounter:
 # A global message counter
 message_counter = MessageCounter()
 
-# A list to store the messages to be deleted
-messages_to_delete = []
-
 def schedule_message_deletion(command_message, response_message):
-    # Add the command message and the bot's response to the list
-    messages_to_delete.append((command_message, response_message))
-
-    # Start a new thread to delete the messages if it's not already running
-    if not any(thread.is_alive() for thread in threading.enumerate() if thread.name == 'delete_messages_thread'):
-        threading.Thread(target=delete_messages, args=(messages_to_delete,), name='delete_messages_thread').start()
+    # Start a new thread to delete the messages
+    threading.Thread(target=delete_messages, args=(command_message, response_message), name='delete_messages_thread').start()
 
 # Register an event handler for each channel
 for channel_link in config.get('channel_id', []):
@@ -76,15 +69,14 @@ for channel_link in config.get('channel_id', []):
         except Exception as e:
             logging.error(f"An error occurred while handling a new message event: {e}")
 
-def delete_messages(messages):
+def delete_messages(command_message, response_message):
     time.sleep(30)  # Wait for 30 seconds
     logging.info("Messages deleted...")
     
     # Delete the command message and the bot's response
-    for message, sent_message in messages:
-        with suppress(Exception):
-            bot.delete_message(message.chat.id, message.message_id)
-            bot.delete_message(sent_message.chat.id, sent_message.message_id)
+    with suppress(Exception):
+        bot.delete_message(command_message.chat.id, command_message.message_id)
+        bot.delete_message(response_message.chat.id, response_message.message_id)
 
 @bot.message_handler(commands=['status'])
 def handle_status_command(message):
