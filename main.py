@@ -7,8 +7,6 @@ from datetime import timedelta
 import yaml
 import threading
 import time
-from contextlib import suppress
-from functools import partial
 from commands import status
 from commands import counts
 from commands import service_status
@@ -17,14 +15,18 @@ from commands import service_status
 logging.basicConfig(level=logging.INFO)
 
 # Load the configuration from the YAML file
-with suppress(Exception):
+try:
     with open('config.yml', 'r') as f:
         config = yaml.safe_load(f)
-config = config or {}
+except FileNotFoundError:
+    logging.error("config.yml file not found.")
+    config = {}
 
-with suppress(Exception):
+try:
     client = TelegramClient('anon', config['api_id'], config['api_hash'])
     bot = telebot.TeleBot(config['bot_token'])
+except KeyError as e:
+    logging.error(f"Missing key in config: {e}")
 
 # Constants
 TELEGRAM_LINK_PREFIX = "https://t.me/c/"
@@ -65,43 +67,58 @@ for channel_link in config.get('channel_id', []):
                 if keyword in event.raw_text:
                     logging.info("Keyword found in message. Sending message...")
                     message_link = f"{TELEGRAM_LINK_PREFIX}{channel_link}/{event.id}"
-                    bot.send_message(config['user_id'], f"关键词: {keyword}\n链接: {message_link}")
+                    try:
+                        bot.send_message(config['user_id'], f"关键词: {keyword}\n链接: {message_link}")
+                    except Exception as e:
+                        logging.error(f"An error occurred while sending a message: {e}")
         except Exception as e:
             logging.error(f"An error occurred while handling a new message event: {e}")
 
 def delete_messages(command_message, response_message):
+    logging.info("Starting to delete messages...")
     time.sleep(30)  # Wait for 30 seconds
-    logging.info("Messages deleted...")
-    
-    # Delete the command message and the bot's response
-    with suppress(Exception):
+    try:
         bot.delete_message(command_message.chat.id, command_message.message_id)
         bot.delete_message(response_message.chat.id, response_message.message_id)
+    except Exception as e:
+        logging.error(f"An error occurred while deleting a message: {e}")
+    logging.info("Messages deleted...")
 
 @bot.message_handler(commands=['status'])
 def handle_status_command(message):
-    # Split the message text into words
-    words = message.text.split()
-    # If there is a second word, use it as the service name
-    if len(words) > 1:
-        service_name = words[1]
-        sent_message = service_status.send_service_status(bot, message, service_name)
-    else:
-        sent_message = status.send_system_info(bot, message, message_counter)
+    logging.info("Handling status command...")
+    try:
+        # Split the message text into words
+        words = message.text.split()
+        # If there is a second word, use it as the service name
+        if len(words) > 1:
+            service_name = words[1]
+            sent_message = service_status.send_service_status(bot, message, service_name)
+        else:
+            sent_message = status.send_system_info(bot, message, message_counter)
 
-    # Schedule the command message and the bot's response for deletion
-    schedule_message_deletion(message, sent_message)
+        # Schedule the command message and the bot's response for deletion
+        schedule_message_deletion(message, sent_message)
+    except Exception as e:
+        logging.error(f"An error occurred while handling the status command: {e}")
+    logging.info("Status command handled.")
 
 @bot.message_handler(commands=['counts'])
 def send_message_counts(message):
-    sent_message = counts.send_message_counts(bot, message, message_counter)
-
-    # Schedule the command message and the bot's response for deletion
-    schedule_message_deletion(message, sent_message)
+    logging.info("Handling counts command...")
+    try:
+        sent_message = counts.send_message_counts(bot, message, message_counter)
+        # Schedule the command message and the bot's response for deletion
+        schedule_message_deletion(message, sent_message)
+    except Exception as e:
+        logging.error(f"An error occurred while handling the counts command: {e}")
+    logging.info("Counts command handled.")
 
 def start_polling():
-    with suppress(Exception):
+    try:
         bot.polling()
+    except Exception as e:
+        logging.error(f"An error occurred while polling: {e}")
 
 async def main():
     try:
@@ -120,5 +137,7 @@ async def main():
         logging.info("Logged out.")
 
 # Run the main function
-with suppress(Exception):
+try:
     asyncio.run(main())
+except Exception as e:
+    logging.error(f"An error occurred while running the main function: {e}")
