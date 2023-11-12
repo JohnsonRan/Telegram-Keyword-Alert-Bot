@@ -15,11 +15,18 @@ import time
 logging.basicConfig(level=logging.INFO)
 
 # Load the configuration from the YAML file
-with open('config.yml', 'r') as f:
-    config = yaml.safe_load(f)
+try:
+    with open('config.yml', 'r') as f:
+        config = yaml.safe_load(f)
+except Exception as e:
+    logging.error(f"An error occurred while loading the configuration: {e}")
+    config = {}
 
-client = TelegramClient('anon', config['api_id'], config['api_hash'])
-bot = telebot.TeleBot(config['bot_token'])
+try:
+    client = TelegramClient('anon', config['api_id'], config['api_hash'])
+    bot = telebot.TeleBot(config['bot_token'])
+except Exception as e:
+    logging.error(f"An error occurred while initializing the Telegram client or bot: {e}")
 
 # Constants
 TELEGRAM_LINK_PREFIX = "https://t.me/c/"
@@ -44,66 +51,78 @@ class MessageCounter:
 message_counter = MessageCounter()
 
 # Register an event handler for each channel
-for channel_link in config['channel_links']:
+for channel_link in config.get('channel_links', []):
     @client.on(events.NewMessage(chats=channel_link))
     async def handle_new_message_event(event):
-        # Get the channel's information
-        channel = await event.get_chat()
-        message_counter.increment(channel.title, channel_link)
-        for keyword in config['keywords']:
-            if keyword in event.raw_text:
-                logging.info("Keyword found in message. Sending message...")
-                message_link = f"{TELEGRAM_LINK_PREFIX}{channel_link}/{event.id}"
-                bot.send_message(config['user_id'], f"关键词: {keyword}\n链接: {message_link}")
+        try:
+            # Get the channel's information
+            channel = await event.get_chat()
+            message_counter.increment(channel.title, channel_link)
+            for keyword in config.get('keywords', []):
+                if keyword in event.raw_text:
+                    logging.info("Keyword found in message. Sending message...")
+                    message_link = f"{TELEGRAM_LINK_PREFIX}{channel_link}/{event.id}"
+                    bot.send_message(config['user_id'], f"关键词: {keyword}\n链接: {message_link}")
+        except Exception as e:
+            logging.error(f"An error occurred while handling a new message event: {e}")
 
 @bot.message_handler(commands=['status'])
 def send_system_info(message):
-    logging.info("Received /status command")  # Log a message when the /check command is received
+    try:
+        logging.info("Received /status command")  # Log a message when the /check command is received
 
-    # 计算脚本运行时间
-    uptime = message_counter.get_uptime()
+        # 计算脚本运行时间
+        uptime = message_counter.get_uptime()
 
-    # 获取CPU使用情况
-    cpu_usage = psutil.cpu_percent(interval=1)
+        # 获取CPU使用情况
+        cpu_usage = psutil.cpu_percent(interval=1)
 
-    # 获取内存使用情况
-    memory_info = psutil.virtual_memory()
-    total_memory_gb = memory_info.total / (1024.0 ** 3)  # Convert bytes to GB
-    used_memory_gb = (memory_info.total - memory_info.available) / (1024.0 ** 3)  # Convert bytes to GB
+        # 获取内存使用情况
+        memory_info = psutil.virtual_memory()
+        total_memory_gb = memory_info.total / (1024.0 ** 3)  # Convert bytes to GB
+        used_memory_gb = (memory_info.total - memory_info.available) / (1024.0 ** 3)  # Convert bytes to GB
 
-    # 如果内存小于1GB，则以MB的形式显示
-    if used_memory_gb < 1:
-        used_memory = f"{used_memory_gb * 1024:.2f}MB"
-    else:
-        used_memory = f"{used_memory_gb:.2f}GB"
+        # 如果内存小于1GB，则以MB的形式显示
+        if used_memory_gb < 1:
+            used_memory = f"{used_memory_gb * 1024:.2f}MB"
+        else:
+            used_memory = f"{used_memory_gb:.2f}GB"
 
-    if total_memory_gb < 1:
-        total_memory = f"{total_memory_gb * 1024:.2f}MB"
-    else:
-        total_memory = f"{total_memory_gb:.2f}GB"
+        if total_memory_gb < 1:
+            total_memory = f"{total_memory_gb * 1024:.2f}MB"
+        else:
+            total_memory = f"{total_memory_gb:.2f}GB"
 
-    # 获取服务器时间
-    server_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # 获取服务器时间
+        server_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # 构建消息
-    msg = f"运行时间: {uptime}\nCPU使用率: {cpu_usage}%\n内存: {used_memory} / {total_memory}\n服务器时间: {server_time}"
+        # 构建消息
+        msg = f"运行时间: {uptime}\nCPU使用率: {cpu_usage}%\n内存: {used_memory} / {total_memory}\n服务器时间: {server_time}"
 
-    # 发送消息
-    bot.reply_to(message, msg)
+        # 发送消息
+        bot.reply_to(message, msg)
+    except Exception as e:
+        logging.error(f"An error occurred while sending system info: {e}")
 
 @bot.message_handler(commands=['counts'])
 def send_message_counts(message):
-    logging.info("Received /counts command")  # Log a message when the /count command is received
+    try:
+        logging.info("Received /counts command")  # Log a message when the /count command is received
 
-    # Build the message
-    counts = message_counter.get_counts()
-    msg = "已检查消息数：\n" + "\n".join(f"[{channel_name}]({TELEGRAM_LINK_PREFIX}{info['link']}): {info['count']}" for channel_name, info in counts.items())
+        # Build the message
+        counts = message_counter.get_counts()
+        msg = "已检查消息数：\n" + "\n".join(f"[{channel_name}]({TELEGRAM_LINK_PREFIX}{info['link']}): {info['count']}" for channel_name, info in counts.items())
 
-    # Send the message
-    bot.reply_to(message, msg, parse_mode='Markdown')
+        # Send the message
+        bot.reply_to(message, msg, parse_mode='Markdown')
+    except Exception as e:
+        logging.error(f"An error occurred while sending message counts: {e}")
 
 def start_polling():
-    bot.polling()
+    try:
+        bot.polling()
+    except Exception as e:
+        logging.error(f"An error occurred while starting bot polling: {e}")
 
 async def main():
     try:
@@ -122,4 +141,7 @@ async def main():
         logging.info("Logged out.")
 
 # Run the main function
-asyncio.run(main())
+try:
+    asyncio.run(main())
+except Exception as e:
+    logging.error(f"An error occurred while running the main function: {e}")
