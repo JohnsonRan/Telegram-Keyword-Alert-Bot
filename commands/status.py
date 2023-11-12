@@ -36,6 +36,10 @@ def send_system_info(bot: TeleBot, message, message_counter):
         msg = f"运行时间: {uptime}\nCPU使用率: {cpu_usage}%\n内存: {used_memory} / {total_memory}\n服务器时间: {server_time}"
 
         # 发送消息
-        bot.reply_to(message, msg)
+        try:
+            sent_message = bot.reply_to(message, msg)
+            return sent_message
+        except Exception as e:
+            logging.error(f"An error occurred while sending system info: {e}")
     except Exception as e:
-        logging.error(f"An error occurred while sending system info: {e}")
+        logging.error(f"An error occurred while getting system info: {e}")

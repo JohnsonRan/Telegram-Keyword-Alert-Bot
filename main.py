@@ -73,9 +73,21 @@ def handle_status_command(message):
     # If there is a second word, use it as the service name
     if len(words) > 1:
         service_name = words[1]
-        service_status.send_service_status(bot, message, service_name)
+        sent_message = service_status.send_service_status(bot, message, service_name)
     else:
-        status.send_system_info(bot, message, message_counter)
+        sent_message = status.send_system_info(bot, message, message_counter)
+
+    threading.Thread(target=delete_messages, args=(message, sent_message)).start()
+
+def delete_messages(message, sent_message):
+    time.sleep(30)  # Wait for 30 seconds
+
+    # Delete the command message and the bot's response
+    try:
+        bot.delete_message(message.chat.id, message.message_id)
+        bot.delete_message(sent_message.chat.id, sent_message.message_id)
+    except Exception as e:
+        logging.error(f"An error occurred while deleting messages: {e}")
 
 @bot.message_handler(commands=['counts'])
 def send_message_counts(message):

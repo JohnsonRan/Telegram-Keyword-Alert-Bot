@@ -23,7 +23,11 @@ def send_service_status(bot: TeleBot, message, service_name):
         msg += "\n\n".join(journal_entries)
         msg += "```"
 
-        # Send the message
-        bot.reply_to(message, msg, parse_mode='Markdown')
+        # Send the message and return the sent message
+        try:
+            sent_message = bot.reply_to(message, msg, parse_mode='Markdown')
+            return sent_message
+        except Exception as e:
+            logging.error(f"An error occurred while sending service status: {e}")
     except Exception as e:
-        logging.error(f"An error occurred while sending service status: {e}")
+        logging.error(f"An error occurred while getting service status: {e}")

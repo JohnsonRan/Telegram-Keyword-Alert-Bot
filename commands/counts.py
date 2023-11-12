@@ -13,6 +13,10 @@ def send_message_counts(bot: TeleBot, message, message_counter):
         msg = "已检查消息数：\n" + "\n".join(f"[{channel_name}]({TELEGRAM_LINK_PREFIX}{info['link']}): {info['count']}" for channel_name, info in counts.items())
 
         # Send the message
-        bot.reply_to(message, msg, parse_mode='Markdown')
+        try:
+            sent_message = bot.reply_to(message, msg)
+            return sent_message
+        except Exception as e:
+            logging.error(f"An error occurred while sending message counts: {e}")
     except Exception as e:
-        logging.error(f"An error occurred while sending message counts: {e}")
+        logging.error(f"An error occurred while getting message counts: {e}")
