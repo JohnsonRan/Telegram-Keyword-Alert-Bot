@@ -4,7 +4,7 @@ user_id: YOUR_USER_ID
 keywords:
   - test
   - test1
-channel_links:
+channel_id:
   - YOUR_CHANNEL_ID
   - YOUR_CHANNEL_ID
 bot_token: YOUR_BOT_TOKEN

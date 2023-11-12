@@ -14,7 +14,7 @@ def send_message_counts(bot: TeleBot, message, message_counter):
 
         # Send the message
         try:
-            sent_message = bot.reply_to(message, msg)
+            sent_message = bot.reply_to(message, msg, parse_mode='Markdown')
             return sent_message
         except Exception as e:
             logging.error(f"An error occurred while sending message counts: {e}")
