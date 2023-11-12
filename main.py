@@ -9,6 +9,7 @@ import datetime
 import subprocess
 import yaml
 import threading
+import time
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -26,6 +27,7 @@ TELEGRAM_LINK_PREFIX = "https://t.me/c/"
 class MessageCounter:
     def __init__(self):
         self.counter = {}
+        self.start_time = time.time()
 
     def increment(self, channel_title, channel_link):
         if channel_title not in self.counter:
@@ -35,12 +37,16 @@ class MessageCounter:
     def get_counts(self):
         return self.counter
 
+    def get_uptime(self):
+        uptime_seconds = time.time() - self.start_time
+        return str(timedelta(seconds=int(uptime_seconds)))
+
 message_counter = MessageCounter()
 
 # Register an event handler for each channel
 for channel_link in config['channel_links']:
     @client.on(events.NewMessage(chats=channel_link))
-    async def handle_new_message(event):
+    async def handle_new_message_event(event):
         # Get the channel's information
         channel = await event.get_chat()
         message_counter.increment(channel.title, channel_link)
@@ -54,8 +60,8 @@ for channel_link in config['channel_links']:
 def send_system_info(message):
     logging.info("Received /check command")  # Log a message when the /check command is received
 
-    # 获取系统运行时间
-    uptime = subprocess.check_output(['uptime', '-p']).decode('utf-8').strip()
+    # 计算脚本运行时间
+    uptime = message_counter.get_uptime()
 
     # 获取CPU使用情况
     cpu_usage = psutil.cpu_percent(interval=1)
@@ -68,7 +74,7 @@ def send_system_info(message):
     server_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # 构建消息
-    msg = f"服务器运行时间: {uptime}\nCPU使用率: {cpu_usage}%\n内存使用率: {memory_usage}%\n服务器时间: {server_time}"
+    msg = f"运行时间: {uptime}\nCPU使用率: {cpu_usage}%\n内存使用率: {memory_usage}%\n服务器时间: {server_time}"
 
     # 发送消息
     bot.reply_to(message, msg)
