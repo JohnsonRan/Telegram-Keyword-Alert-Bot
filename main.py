@@ -9,6 +9,7 @@ import threading
 import time
 from commands import status
 from commands import counts
+from commands import service_status
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -66,8 +67,15 @@ for channel_link in config.get('channel_links', []):
             logging.error(f"An error occurred while handling a new message event: {e}")
 
 @bot.message_handler(commands=['status'])
-def send_system_info(message):
-    status.send_system_info(bot, message, message_counter)
+def handle_status_command(message):
+    # Split the message text into words
+    words = message.text.split()
+    # If there is a second word, use it as the service name
+    if len(words) > 1:
+        service_name = words[1]
+        service_status.send_service_status(bot, message, service_name)
+    else:
+        status.send_system_info(bot, message, message_counter)
 
 @bot.message_handler(commands=['counts'])
 def send_message_counts(message):
