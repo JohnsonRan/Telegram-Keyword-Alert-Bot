@@ -66,7 +66,7 @@ for channel_link in config.get('channel_id', []):
             channel_link = f"{TELEGRAM_LINK_PREFIX}{channel.id}"
             message_counter.increment(channel.title, channel_link)
             for keyword in config.get('keywords', []):
-                if keyword in event.raw_text:
+                if keyword.lower() in event.raw_text.lower():
                     logging.info("Keyword found in message. Sending message...")
                     message_link = f"{TELEGRAM_LINK_PREFIX}{channel.id}/{event.id}"
                     try:
