@@ -62,11 +62,13 @@ for channel_link in config.get('channel_id', []):
         try:
             # Get the channel's information
             channel = await event.get_chat()
+            # Convert the channel ID to a link
+            channel_link = f"{TELEGRAM_LINK_PREFIX}{channel.id}"
             message_counter.increment(channel.title, channel_link)
             for keyword in config.get('keywords', []):
                 if keyword in event.raw_text:
                     logging.info("Keyword found in message. Sending message...")
-                    message_link = f"{TELEGRAM_LINK_PREFIX}{channel_link}/{event.id}"
+                    message_link = f"{TELEGRAM_LINK_PREFIX}{channel.id}/{event.id}"
                     try:
                         bot.send_message(config['user_id'], f"关键词: {keyword}\n链接: {message_link}")
                     except Exception as e:
