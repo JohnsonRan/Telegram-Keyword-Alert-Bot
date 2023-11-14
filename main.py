@@ -29,7 +29,7 @@ except KeyError as e:
     logging.error(f"Missing key in config: {e}")
 
 # Constants
-TELEGRAM_LINK_PREFIX = "https://t.me/c/"
+TELEGRAM_LINK_PREFIX = "https://t.me/"
 
 class MessageCounter:
     def __init__(self):
@@ -55,24 +55,29 @@ def schedule_message_deletion(command_message, response_message):
     # Start a new thread to delete the messages
     threading.Thread(target=delete_messages, args=(command_message, response_message), name='delete_messages_thread').start()
 
+async def send_message(bot, user_id, keyword, channel_link, event_id):
+    message_link = f"{channel_link}/{event_id}"
+    try:
+        bot.send_message(user_id, f"关键词: {keyword}\n链接: {message_link}")
+    except Exception as e:
+        logging.error(f"An error occurred while sending a message: {e}")
+
 # Register an event handler for each channel
-for channel_link in config.get('channel_id', []):
+for channel_id in config.get('channel_id', []):
+    channel_link = TELEGRAM_LINK_PREFIX + channel_id
     @client.on(events.NewMessage(chats=channel_link))
     async def handle_new_message_event(event):
         try:
             # Get the channel's information
             channel = await event.get_chat()
-            # Convert the channel ID to a link
-            channel_link = f"{TELEGRAM_LINK_PREFIX}{channel.id}"
-            message_counter.increment(channel.title, channel_link)
-            for keyword in config.get('keywords', []):
-                if keyword.lower() in event.raw_text.lower():
-                    logging.info("Keyword found in message. Sending message...")
-                    message_link = f"{TELEGRAM_LINK_PREFIX}{channel.id}/{event.id}"
-                    try:
-                        bot.send_message(config['user_id'], f"关键词: {keyword}\n链接: {message_link}")
-                    except Exception as e:
-                        logging.error(f"An error occurred while sending a message: {e}")
+            # Convert the channel username to a link
+            if channel.username:
+                channel_link = f"{TELEGRAM_LINK_PREFIX}{channel.username}"
+                message_counter.increment(channel.title, channel_link)
+                for keyword in config.get('keywords', []):
+                    if keyword.lower() in event.raw_text.lower():
+                        logging.info("Keyword found in message. Sending message...")
+                        await send_message(bot, config['user_id'], keyword, channel_link, event.id)
         except Exception as e:
             logging.error(f"An error occurred while handling a new message event: {e}")
 
